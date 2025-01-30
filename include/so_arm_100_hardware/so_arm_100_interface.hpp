@@ -72,6 +72,8 @@ private:
   sensor_msgs::msg::JointState::SharedPtr last_feedback_msg_;
   std::mutex feedback_mutex_;
 
+  SMS_STS st3215_;
+
   void feedback_callback(const sensor_msgs::msg::JointState::SharedPtr msg);
 };
 

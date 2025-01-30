@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(so_arm_100_hardware)
 
+# Add SCServo subdirectory
+add_subdirectory(include/SCServo_Linux)
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -11,10 +14,6 @@ find_package(rclcpp REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
-
-file(GLOB SCSERVO_LINUX_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/SCServo_Linux/*.cpp)
-file(GLOB SCSERVO_LINUX_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/SCServo_Linux/*.h)
-add_library(SCServo STATIC ${SCSERVO_LINUX_SOURCES} ${SCSERVO_LINUX_HEADERS})
 
 
 
@@ -27,7 +26,6 @@ target_include_directories(
   ${PROJECT_NAME}
   PRIVATE
   include
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/SCServo_Linux
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -66,6 +64,23 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+# Add test executable
+add_executable(test_servo
+  test/test_servo.cpp
+)
 
+target_include_directories(test_servo PRIVATE
+  include
+)
+
+target_link_libraries(test_servo
+  SCServo
+)
+
+# Install test executable
+install(
+  TARGETS test_servo
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 ament_package()
