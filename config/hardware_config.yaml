@@ -1,0 +1,5 @@
+so_arm_100:
+  hardware_interface:
+    use_serial: true  # Set to true to use serial communication
+    serial_port: "/dev/ttyUSB0"
+    serial_baudrate: 1000000
