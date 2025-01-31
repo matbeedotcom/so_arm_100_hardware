@@ -23,7 +23,7 @@
 #define SMS_STS_MODEL_L 3
 #define SMS_STS_MODEL_H 4
 
-//-------EPROM (Read and Write)--------
+//-------EPROM(读写)--------
 #define SMS_STS_ID 5
 #define SMS_STS_BAUD_RATE 6
 #define SMS_STS_MIN_ANGLE_LIMIT_L 9
@@ -36,7 +36,7 @@
 #define SMS_STS_OFS_H 32
 #define SMS_STS_MODE 33
 
-//-------SRAM (Read and Write)--------
+//-------SRAM(读写)--------
 #define SMS_STS_TORQUE_ENABLE 40
 #define SMS_STS_ACC 41
 #define SMS_STS_GOAL_POSITION_L 42
@@ -47,7 +47,7 @@
 #define SMS_STS_GOAL_SPEED_H 47
 #define SMS_STS_LOCK 55
 
-//-------SRAM (Read only)--------
+//-------SRAM(只读)--------
 #define SMS_STS_PRESENT_POSITION_L 56
 #define SMS_STS_PRESENT_POSITION_H 57
 #define SMS_STS_PRESENT_SPEED_L 58
@@ -73,11 +73,11 @@ public:
 	virtual void SyncWritePosEx(u8 ID[], u8 IDN, s16 Position[], u16 Speed[], u8 ACC[]); // Mode 0: Sync write multiple servo positions
 	virtual int Mode(u8 ID, u8 mode); // Set mode: 0 (servo), 1 (wheel; closed loop) or 2 (wheel; open loop)
 	virtual int WriteSpe(u8 ID, s16 Speed, u8 ACC = 0); // Mode 1: Ordinary write single servo speed
-    virtual int RegWriteSpe(u8 ID, s16 Speed, u8 ACC = 0); // Mode 1: Async write single servo speed
-    virtual void SyncWriteSpe(u8 ID[], u8 IDN, s16 Speed[], u8 ACC[]); // Mode 1: Sync write multiple servo speeds
-    virtual int WritePwm(u8 ID, s16 Pwm); //Mode 2: Ordinary write single servo PWM
-    virtual int RegWritePwm(u8 ID, s16 Pwm); //Mode 2: Async write single servo PWM
-    virtual void SyncWritePwm(u8 ID[], u8 IDN, s16 Pwm[]); // Mode 2: Sync write multiple servo PWMs
+	virtual int RegWriteSpe(u8 ID, s16 Speed, u8 ACC = 0); // Mode 1: Async write single servo speed
+	virtual void SyncWriteSpe(u8 ID[], u8 IDN, s16 Speed[], u8 ACC[]); // Mode 1: Sync write multiple servo speeds
+	virtual int WritePwm(u8 ID, s16 Pwm); //Mode 2: Ordinary write single servo PWM
+	virtual int RegWritePwm(u8 ID, s16 Pwm); //Mode 2: Async write single servo PWM
+	virtual void SyncWritePwm(u8 ID[], u8 IDN, s16 Pwm[]); // Mode 2: Sync write multiple servo PWMs
 	virtual int EnableTorque(u8 ID, u8 Enable); // Enable torque
 	virtual int unLockEprom(u8 ID); // EEPROM unlock 
 	virtual int LockEprom(u8 ID);// EEPROM lock

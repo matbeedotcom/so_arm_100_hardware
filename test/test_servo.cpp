@@ -1,64 +1,54 @@
-#include <SCServo_Linux/SCServo.h>
 #include <iostream>
+#include "SCServo.h"
 #include <thread>
 #include <chrono>
-#include <fcntl.h>
-#include <termios.h>
-#include <unistd.h>
 
-int main() {
-    SMS_STS st3215;
+SMS_STS sm_st;
+
+int main(int argc, char **argv)
+{
+    const char* port = "/dev/ttyUSB0";
+    std::cout << "serial:" << port << std::endl;
     
-    // Check if port exists
-    int fd = open("/dev/ttyUSB0", O_RDWR);
-    if (fd < 0) {
-        std::cerr << "Error opening port: " << strerror(errno) << std::endl;
-        return 1;
+    if(!sm_st.begin(1000000, port)){
+        std::cout << "Failed to init sms/sts motor!" << std::endl;
+        return 0;
     }
-    close(fd);
-    
-    std::cout << "Attempting to initialize at 1000000 baud..." << std::endl;
-    if(!st3215.begin(1000000, "/dev/ttyUSB0")) {
-        std::cerr << "Failed to initialize motors" << std::endl;
-        return 1;
-    }
-    std::cout << "Serial port initialized" << std::endl;
-    
-    // Try to communicate with each servo
+
+    // Read data from all servos
     for(int id = 1; id <= 6; id++) {
-        std::cout << "Testing servo " << id << "..." << std::endl;
+        std::cout << "\nReading servo " << id << "..." << std::endl;
         
-        // First ping the servo
-        if (st3215.Ping(id) != -1) {
-            std::cout << "  Servo " << id << " responded to ping" << std::endl;
+        if (sm_st.FeedBack(id) != -1) {
+            // Position (0-4095)
+            int pos = sm_st.ReadPos(id);
             
-            // Set to position control mode
-            if (st3215.Mode(id, 0)) {
-                std::cout << "  Set to position control mode" << std::endl;
-                
-                // Now try to read data
-                if (st3215.FeedBack(id) != -1) {
-                    int pos = st3215.ReadPos(id);
-                    double voltage = st3215.ReadVoltage(id) / 10.0;
-                    double temp = st3215.ReadTemper(id);
-                    int load = st3215.ReadLoad(id);
-                    
-                    std::cout << "  Position: " << pos << std::endl;
-                    std::cout << "  Voltage: " << voltage << "V" << std::endl;
-                    std::cout << "  Temperature: " << temp << "°C" << std::endl;
-                    std::cout << "  Load: " << load << std::endl;
-                } else {
-                    std::cout << "  Failed to read feedback" << std::endl;
-                }
-            } else {
-                std::cout << "  Failed to set mode" << std::endl;
-            }
+            // Speed (-32767 - 32767)
+            int speed = sm_st.ReadSpeed(id);
+            
+            // Load (-1000 - 1000)
+            int load = sm_st.ReadLoad(id);
+            
+            // Voltage (V)
+            double voltage = sm_st.ReadVoltage(id) / 10.0;
+            
+            // Temperature (°C)
+            int temp = sm_st.ReadTemper(id);
+            
+            // Move status (0=stopped, 1=moving)
+            int move = sm_st.ReadMove(id);
+            
+            std::cout << "  Position: " << pos << " (0-4095)" << std::endl;
+            std::cout << "  Speed: " << speed << std::endl;
+            std::cout << "  Load: " << load << std::endl;
+            std::cout << "  Voltage: " << voltage << "V" << std::endl;
+            std::cout << "  Temperature: " << temp << "°C" << std::endl;
+            std::cout << "  Moving: " << (move ? "yes" : "no") << std::endl;
         } else {
-            std::cout << "  No ping response from servo " << id << std::endl;
+            std::cout << "  Failed to read feedback from servo " << id << std::endl;
         }
-        
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    
+
+    sm_st.end();
     return 0;
 } 

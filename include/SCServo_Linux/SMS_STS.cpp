@@ -1,8 +1,8 @@
 ﻿/*
  * SMS_STS.cpp
- * Feetech SMS/STS Series Serial Servo Application Layer Program
- * Date: 2021.12.8
- * Author: 
+ * SMS/STS系列串行舵机应用层程序
+ * 日期: 2021.12.8
+ * 作者: 
  */
 
 #include "SMS_STS.h"
@@ -52,6 +52,7 @@ int SMS_STS::RegWritePosEx(u8 ID, s16 Position, u16 Speed, u8 ACC)
 
 void SMS_STS::SyncWritePosEx(u8 ID[], u8 IDN, s16 Position[], u16 Speed[], u8 ACC[])
 {
+
     u8 offbuf[IDN][7];
     for(u8 i = 0; i<IDN; i++){
 		if(Position[i]<0){

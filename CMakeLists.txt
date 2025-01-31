@@ -15,12 +15,9 @@ find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 
-
-
 add_library(${PROJECT_NAME} SHARED
   src/so_arm_100_interface.cpp
 )
-
 
 target_include_directories(
   ${PROJECT_NAME}
@@ -69,17 +66,36 @@ add_executable(test_servo
   test/test_servo.cpp
 )
 
-target_include_directories(test_servo PRIVATE
-  include
+target_include_directories(test_servo 
+  PRIVATE
+  include/SCServo_Linux  # Direct path to SCServo headers
 )
 
 target_link_libraries(test_servo
-  SCServo
+  PRIVATE
+  SCServo  # Link directly to SCServo library
 )
 
 # Install test executable
 install(
   TARGETS test_servo
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+add_executable(ping_test
+  test/ping_test.cpp
+)
+
+target_include_directories(ping_test PRIVATE
+  include
+)
+
+target_link_libraries(ping_test
+  SCServo
+)
+
+install(
+  TARGETS ping_test
   DESTINATION lib/${PROJECT_NAME}
 )
 
