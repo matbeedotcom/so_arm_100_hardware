@@ -76,12 +76,6 @@ CallbackReturn SOARM100Interface::on_activate(const rclcpp_lifecycle::State & /*
 {
     RCLCPP_INFO(rclcpp::get_logger("SOARM100Interface"), "Activating so_arm_100 hardware interface...");
 
-    for (size_t i = 0; i < info_.joints.size(); ++i)
-    {
-        position_states_[i] = 0.0;
-        position_commands_[i] = 0.0;
-    }
-
     if (use_serial_) {
         if(!st3215_.begin(serial_baudrate_, serial_port_.c_str())) {
             RCLCPP_ERROR(rclcpp::get_logger("SOARM100Interface"), "Failed to initialize motors");
@@ -106,10 +100,11 @@ CallbackReturn SOARM100Interface::on_activate(const rclcpp_lifecycle::State & /*
                 return CallbackReturn::ERROR;
             }
 
-            // Read initial position
+            // Read initial position and set command to match
             if (st3215_.FeedBack(servo_id) != -1) {
                 int pos = st3215_.ReadPos(servo_id);
                 position_states_[i] = M_PI - (pos * 2 * M_PI / 4096.0);
+                position_commands_[i] = position_states_[i];  // Set command to match current position
                 RCLCPP_INFO(rclcpp::get_logger("SOARM100Interface"), 
                            "Servo %d initialized at position %d", servo_id, pos);
             }
@@ -165,7 +160,7 @@ hardware_interface::return_type SOARM100Interface::write(const rclcpp::Time & ti
     if (use_serial_) {
         for (size_t i = 0; i < info_.joints.size(); ++i) {
             uint8_t servo_id = static_cast<uint8_t>(i + 1);
-            int joint_pos_cmd = static_cast<int>(round((M_PI - position_commands_[i]) * 4096.0 / (2 * M_PI)));
+            int joint_pos_cmd = static_cast<int>(round((M_PI - position_commands_[i]) * 4096.0 / (2 * M_PI))); // Convert to encoder ticks
             
             if (!st3215_.RegWritePosEx(servo_id, joint_pos_cmd, 4500, 255)) {
                 RCLCPP_WARN(rclcpp::get_logger("SOARM100Interface"), 
