@@ -1,5 +1,6 @@
-so_arm_100:
-  hardware_interface:
-    use_serial: true  # Set to true to use serial communication
+so_arm_100_hardware:
+  ros__parameters:
+    use_serial: true
     serial_port: "/dev/ttyUSB0"
     serial_baudrate: 1000000
+    calibration_file: "$(find so_arm_100_hardware)/config/calibration.yaml"

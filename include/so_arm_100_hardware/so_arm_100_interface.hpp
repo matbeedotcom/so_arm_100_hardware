@@ -17,9 +17,12 @@
 #include <string>
 #include <memory>
 #include <termios.h>
+#include <map>
 
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <SCServo_Linux/SCServo.h>
+#include "std_srvs/srv/trigger.hpp"
+#include <yaml-cpp/yaml.h>
 
 namespace so_arm_100_controller
 {
@@ -48,6 +51,19 @@ private:
   std::vector<double> position_commands_;
   std::vector<double> position_states_;
 
+  // Keep these until we fully transition to calibration
+  std::vector<int> zero_positions_{2048, 2048, 2048, 2048, 2048, 2048};  // Center positions
+  std::vector<int> servo_directions_{1, 1, 1, 1, 1, 1};  // Direction multipliers
+
+  // Calibration data
+  struct JointCalibration {
+    int min_ticks;
+    int center_ticks;
+    int max_ticks;
+    double range_ticks;
+  };
+  std::map<std::string, JointCalibration> joint_calibration_;
+
   // Communication configuration
   bool use_serial_;
   std::string serial_port_;
@@ -75,6 +91,31 @@ private:
   SMS_STS st3215_;
 
   void feedback_callback(const sensor_msgs::msg::JointState::SharedPtr msg);
+
+  // Calibration methods
+  void calibrate_servo(uint8_t servo_id, int current_pos);
+  double ticks_to_radians(int ticks, size_t servo_idx);
+  int radians_to_ticks(double radians, size_t servo_idx);
+
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr calib_service_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr torque_service_;
+
+  void calibration_callback(
+      const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+      std::shared_ptr<std_srvs::srv::Trigger::Response> response);
+  
+  void torque_callback(
+      const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+      std::shared_ptr<std_srvs::srv::Trigger::Response> response);
+
+  void record_current_position();
+  void set_torque_enable(bool enable);
+
+  std::string last_calibration_data_;
+  bool torque_enabled_{true};
+
+  bool load_calibration(const std::string& filepath);
+  double normalize_position(const std::string& joint_name, int ticks);
 };
 
 }  // namespace so_arm_100_controller
