@@ -105,9 +105,9 @@ CallbackReturn SOARM100Interface::on_activate(const rclcpp_lifecycle::State & /*
             // Read initial position and set command to match
             if (st3215_.FeedBack(servo_id) != -1) {
                 int pos = st3215_.ReadPos(servo_id);
-                calibrate_servo(servo_id, pos);
-                // position_states_[i] = 0.0;
-                // position_commands_[i] = 0.0;
+                // calibrate_servo(servo_id, pos);
+                position_states_[i] = ticks_to_radians(pos, i);
+                position_commands_[i] = position_states_[i];
                 RCLCPP_INFO(rclcpp::get_logger("SOARM100Interface"), 
                            "Servo %d initialized at position %d", servo_id, pos);
             }

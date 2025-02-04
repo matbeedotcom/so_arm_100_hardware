@@ -51,10 +51,14 @@ class JogTool(Node):
         
         # For toggling torque
         self.torque_client = self.create_client(Trigger, '/toggle_torque')
+        while not self.torque_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Waiting for toggle_torque service...')
         
         self.selected_joint = 0
         self.step_size = 0.1  # radians
         self.status_message = ""
+        self.torque_enabled = True
+        self.torque_future = None  # Track the service call future
         
         # Set up poses directory in package share
         self.poses_dir = os.path.join(
@@ -74,10 +78,10 @@ class JogTool(Node):
         if self.selected_joint < len(self.arm_joints):
             joint_name = self.arm_joints[self.selected_joint]
             joint_index = self.selected_joint
-            self.get_logger().info(f'Moving arm joint: {joint_name} at index {joint_index}')
+            # self.get_logger().info(f'Moving arm joint: {joint_name} at index {joint_index}')
         else:
             joint_name = self.gripper_joint
-            self.get_logger().info(f'Moving gripper joint: {joint_name}')
+            # self.get_logger().info(f'Moving gripper joint: {joint_name}')
         
         current_pos = self.joint_positions.get(joint_name, 0.0)
         new_pos = current_pos + delta
@@ -113,7 +117,7 @@ class JogTool(Node):
             msg.points = [point]
             self.gripper_pub.publish(msg)
             
-        self.get_logger().info(f'Moving {joint_name} from {current_pos:.3f} to {new_pos:.3f}')
+        # self.get_logger().info(f'Moving {joint_name} from {current_pos:.3f} to {new_pos:.3f}')
         
     def save_pose(self, pose_name):
         pose_data = {
@@ -134,32 +138,57 @@ class JogTool(Node):
         try:
             with open(filepath, 'r') as f:
                 pose_data = yaml.safe_load(f)
-                
-            msg = JointTrajectory()
-            msg.joint_names = self.arm_joints + [self.gripper_joint]
+
+            # Send arm trajectory
+            arm_goal = FollowJointTrajectory.Goal()
+            arm_goal.trajectory.joint_names = self.arm_joints  # Only arm joints
             
             point = JointTrajectoryPoint()
-            point.positions = [pose_data['positions'][joint] for joint in msg.joint_names]
-            point.velocities = [0.0] * len(msg.joint_names)
-            point.accelerations = [0.0] * len(msg.joint_names)
+            # Get positions only for arm joints
+            point.positions = [pose_data['positions'][joint] for joint in self.arm_joints]
+            point.velocities = [0.0] * len(self.arm_joints)
+            point.accelerations = [0.0] * len(self.arm_joints)
             point.time_from_start.sec = 2
             
-            msg.points = [point]
-            self.arm_client.send_goal_async(msg)
+            arm_goal.trajectory.points = [point]
+            self.arm_client.send_goal_async(arm_goal)
+
+            # Send gripper command separately
+            gripper_msg = JointTrajectory()
+            gripper_msg.joint_names = [self.gripper_joint]
+            
+            gripper_point = JointTrajectoryPoint()
+            gripper_point.positions = [pose_data['positions'][self.gripper_joint]]
+            gripper_point.time_from_start.sec = 2
+            
+            gripper_msg.points = [gripper_point]
+            self.gripper_pub.publish(gripper_msg)
+            
             self.status_message = f"Loaded pose '{pose_name}'"
             
         except Exception as e:
             self.status_message = f"Failed to load pose: {str(e)}"
         
-    async def toggle_torque(self):
-        if not self.torque_client.wait_for_service(timeout_sec=1.0):
-            self.status_message = 'Torque service not available'
-            return
-            
+    def toggle_torque(self):
         request = Trigger.Request()
-        response = await self.torque_client.call_async(request)
-        self.status_message = "Torque toggled"
-        return response.success
+        self.torque_future = self.torque_client.call_async(request)
+        
+        # Add callback to handle response
+        self.torque_future.add_done_callback(self._torque_callback)
+        
+    def _torque_callback(self, future):
+        try:
+            response = future.result()
+            if response.success:
+                self.torque_enabled = not self.torque_enabled
+                state = "enabled" if self.torque_enabled else "disabled"
+                self.status_message = f"Torque {state}"
+            else:
+                self.status_message = f"Failed to toggle torque: {response.message}"
+        except Exception as e:
+            self.status_message = f"Error toggling torque: {str(e)}"
+        finally:
+            self.torque_future = None
 
 def main(stdscr):
     # Set up curses
@@ -176,9 +205,9 @@ def main(stdscr):
     stdscr.addstr(2, 0, "Up/Down: Select joint")
     stdscr.addstr(3, 0, "Left/Right: Move joint")
     stdscr.addstr(4, 0, "+/-: Adjust step size")
-    stdscr.addstr(5, 0, "t: Toggle torque")
-    stdscr.addstr(6, 0, "s: Save pose")
-    stdscr.addstr(7, 0, "l: Load pose")
+    stdscr.addstr(5, 0, "t: Toggle torque (arm/disarm)")
+    stdscr.addstr(6, 0, "s: Save current position")
+    stdscr.addstr(7, 0, "l: Load saved position")
     stdscr.addstr(8, 0, "q: Quit")
     
     pose_name = ""
@@ -192,7 +221,8 @@ def main(stdscr):
             stdscr.addstr(i+10, 0, f"{prefix} {joint:<15} {pos:6.3f}")
         
         stdscr.addstr(17, 0, f"Step size: {node.step_size:5.3f} rad")
-        stdscr.addstr(18, 0, f"Status: {node.status_message}")
+        stdscr.addstr(18, 0, f"Torque: {'ON' if node.torque_enabled else 'OFF'}")
+        stdscr.addstr(19, 0, f"Status: {node.status_message}")
         
         if entering_name:
             stdscr.addstr(19, 0, f"Enter pose name: {pose_name}_")
@@ -236,8 +266,9 @@ def main(stdscr):
                 elif key == ord('-'):
                     node.step_size = max(node.step_size / 1.5, 0.01)
                 elif key == ord('t'):
-                    rclpy.spin_once(node)
+                    # Toggle torque without waiting
                     node.toggle_torque()
+                    rclpy.spin_once(node)  # Process any pending callbacks
                 elif key == ord('s'):
                     entering_name = True
                     node.status_message = "Save pose"
@@ -248,6 +279,7 @@ def main(stdscr):
         except KeyboardInterrupt:
             break
             
+        # Process any pending callbacks including torque response
         rclpy.spin_once(node, timeout_sec=0.1)
     
     rclpy.shutdown()
