@@ -277,7 +277,8 @@ hardware_interface::return_type SOARM100Interface::read(const rclcpp::Time & tim
     return hardware_interface::return_type::OK;
 }
 
-void SOARM100Interface::calibrate_servo(uint8_t servo_id, int current_pos) {
+void SOARM100Interface::calibrate_servo(uint8_t servo_id, int current_pos) 
+{
     size_t idx = servo_id - 1;
     // Calculate offset from current position to expected zero
     int offset = current_pos - zero_positions_[idx];
@@ -286,7 +287,8 @@ void SOARM100Interface::calibrate_servo(uint8_t servo_id, int current_pos) {
                servo_id, current_pos, zero_positions_[idx], offset);
 }
 
-double SOARM100Interface::ticks_to_radians(int ticks, size_t servo_idx) {
+double SOARM100Interface::ticks_to_radians(int ticks, size_t servo_idx) 
+{
     const std::string& joint_name = info_.joints[servo_idx].name;
     
     if (joint_calibration_.count(joint_name) > 0) {
@@ -302,7 +304,8 @@ double SOARM100Interface::ticks_to_radians(int ticks, size_t servo_idx) {
            (ticks - zero_positions_[servo_idx]) * 2 * M_PI / 4096.0;
 }
 
-int SOARM100Interface::radians_to_ticks(double radians, size_t servo_idx) {
+int SOARM100Interface::radians_to_ticks(double radians, size_t servo_idx) 
+{
     const std::string& joint_name = info_.joints[servo_idx].name;
     
     if (joint_calibration_.count(joint_name) > 0) {
@@ -318,7 +321,8 @@ int SOARM100Interface::radians_to_ticks(double radians, size_t servo_idx) {
            servo_directions_[servo_idx] * (int)(radians * 4096.0 / (2 * M_PI));
 }
 
-void SOARM100Interface::record_current_position() {
+void SOARM100Interface::record_current_position() 
+{
     std::stringstream ss;
     ss << "{";  // Start with just a curly brace
     
@@ -366,7 +370,8 @@ void SOARM100Interface::calibration_callback(
     response->message = last_calibration_data_;
 }
 
-void SOARM100Interface::set_torque_enable(bool enable) {
+void SOARM100Interface::set_torque_enable(bool enable) 
+{
     if (use_serial_) {
         // First set all servos
         for (size_t i = 0; i < info_.joints.size(); ++i) {
@@ -424,7 +429,8 @@ void SOARM100Interface::torque_callback(
                 "Torque service called, response: %s", response->message.c_str());
 }
 
-bool SOARM100Interface::load_calibration(const std::string& filepath) {
+bool SOARM100Interface::load_calibration(const std::string& filepath) 
+{
     try {
         YAML::Node config = YAML::LoadFile(filepath);
         auto joints = config["joints"];
@@ -464,7 +470,8 @@ bool SOARM100Interface::load_calibration(const std::string& filepath) {
     }
 }
 
-double SOARM100Interface::normalize_position(const std::string& joint_name, int ticks) {
+double SOARM100Interface::normalize_position(const std::string& joint_name, int ticks) 
+{
     if (joint_calibration_.count(joint_name) == 0) {
         return 0.0;
     }

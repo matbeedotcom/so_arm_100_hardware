@@ -90,6 +90,7 @@ install(
   DIRECTORY
     config
     include
+    config/posses
   DESTINATION 
     share/${PROJECT_NAME}
 )
