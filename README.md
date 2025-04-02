@@ -49,7 +49,7 @@ The `SOARM100Interface` class implements:
 
    ```bash
    cd ~/ros2_ws/src
-   git clone git@github.com:signalbotics/so_arm_100_hardware.git
+   git clone git@github.com:brukg/so_arm_100_hardware.git
    ```
 
 2. **Install dependencies**:
