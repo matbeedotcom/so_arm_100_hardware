@@ -1,7 +1,7 @@
-# SO-ARM-100 Hardware Interface
+# SO-ARM100 Hardware Interface
 
 ## Overview
-The `so_arm_100_hardware` package provides a ROS 2 Control hardware interface plugin for the SO100-arm low-cost 5DoF robotic manipulator. This interface supports both direct serial communication with the physical robot and simulation via ROS topics.
+The `so_arm_100_hardware` package provides a ROS 2 Control hardware interface plugin for the SO-ARM100 low-cost 5DoF robotic manipulator. This interface supports both direct serial communication with the physical robot and simulation via ROS topics.
 
 ## Features
 - ROS 2 Control hardware interface implementation
@@ -15,7 +15,7 @@ The `so_arm_100_hardware` package provides a ROS 2 Control hardware interface pl
 ## Package Details
 - **Name**: so_arm_100_hardware
 - **Version**: 0.0.0
-- **Description**: ROS2 Control Hardware Interface for SO100-arm low-cost 5DoF robotic manipulator
+- **Description**: ROS2 Control Hardware Interface for SO-ARM100 low-cost 5DoF robotic manipulator
 - **Maintainer**: Bruk Gebregziabher (<bruk@signalbotics.com>)
 - **License**: Apache-2.0
 
