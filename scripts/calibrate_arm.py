@@ -8,6 +8,7 @@ from datetime import datetime
 import asyncio
 from threading import Thread
 from ament_index_python.packages import get_package_share_directory
+import argparse
 class CalibrationTool(Node):
     def __init__(self):
         super().__init__('calibration_tool')
@@ -129,7 +130,7 @@ class CalibrationTool(Node):
             
         return limits
 
-    async def calibrate_all_joints(self):
+    async def calibrate_joints(self, joints_to_calibrate=None):
         # Disable torque first
         if not await self.disable_torque():
             print("Failed to disable torque!")
@@ -140,7 +141,10 @@ class CalibrationTool(Node):
             'joints': {}
         }
         
-        for idx, joint in enumerate(self.joints):
+        # Use specified joints or all joints if none specified
+        target_joints = joints_to_calibrate if joints_to_calibrate else self.joints
+
+        for idx, joint in enumerate(target_joints):
             limits = await self.record_joint_limits(joint, idx)
             if limits:
                 # Ensure consistent format
@@ -189,25 +193,47 @@ class CalibrationTool(Node):
         await self.enable_torque()
 
 async def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Calibrate SO-100 arm joints')
+    parser.add_argument('--joints', nargs='+',
+                       choices=['Shoulder_Rotation', 'Shoulder_Pitch', 'Elbow', 'Wrist_Pitch', 'Wrist_Roll', 'Gripper'],
+                       help='Specific joints to calibrate (default: all joints)')
+    parser.add_argument('--list-joints', action='store_true',
+                       help='List available joints and exit')
+
+    args = parser.parse_args()
+
+    if args.list_joints:
+        print("Available joints:")
+        joints = ['Shoulder_Rotation', 'Shoulder_Pitch', 'Elbow', 'Wrist_Pitch', 'Wrist_Roll', 'Gripper']
+        for joint in joints:
+            print(f"  - {joint}")
+        return
+
     rclpy.init()
-    
+
     # Create and spin the node in a separate thread
     tool = CalibrationTool()
     executor = rclpy.executors.SingleThreadedExecutor()
     executor.add_node(tool)
-    
+
     # Spin executor in a separate thread
     executor_thread = Thread(target=executor.spin)
     executor_thread.start()
-    
+
     try:
-        await tool.calibrate_all_joints()
+        if args.joints:
+            print(f"Calibrating specific joints: {', '.join(args.joints)}")
+            await tool.calibrate_joints(args.joints)
+        else:
+            print("Calibrating all joints")
+            await tool.calibrate_joints()
     finally:
         # Cleanup
         executor.shutdown()
         rclpy.shutdown()
         executor_thread.join()
-    
+
     print("\nCalibration complete!")
 
 if __name__ == '__main__':
