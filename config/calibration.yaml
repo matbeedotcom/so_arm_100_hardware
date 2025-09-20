@@ -1,80 +1,81 @@
-timestamp: '2025-02-02T13:26:42.812769'
+root@raspberrypi:/ros2_ws/src/so_arm_100_hardware/config# cat calibration.yaml
+timestamp: '2025-09-20T22:45:37.047815'
 joints:
   Shoulder_Rotation:
-    max:
-      ticks: 3067
-      speed: 0
-      load: -1
-    center:
-      ticks: 1703
-      speed: 0
-      load: 0
     min:
-      ticks: 336
-      speed: 2328
+      ticks: 984
+      speed: -50
+      load: 0
+    center:
+      ticks: 2241
+      speed: -1
+      load: 0
+    max:
+      ticks: 3651
+      speed: -1
       load: 0
   Shoulder_Pitch:
     min:
-      ticks: 2091
+      ticks: 807
       speed: 0
       load: 0
     center:
-      ticks: 943
+      ticks: 1969
       speed: 0
       load: 0
     max:
-      ticks: 3865
-      speed: -1
+      ticks: 3154
+      speed: 0
       load: 0
   Elbow:
     min:
-      ticks: 3239
+      ticks: 3949
       speed: 0
       load: 0
     center:
-      ticks: 1152
-      speed: 0
+      ticks: 1011
+      speed: 50
       load: 0
     max:
-      ticks: 1004
-      speed: 50
+      ticks: 1991
+      speed: -1
       load: 0
   Wrist_Pitch:
     min:
-      ticks: 3417
+      ticks: 912
       speed: 0
       load: 0
     center:
-      ticks: 2255
-      speed: -1
+      ticks: 3221
+      speed: 0
       load: 0
     max:
-      ticks: 965
+      ticks: 3221
       speed: 0
       load: 0
   Wrist_Roll:
     min:
-      ticks: 1302
+      ticks: 3315
       speed: 0
       load: 0
     center:
-      ticks: 213
+      ticks: 1113
       speed: 0
       load: 0
     max:
-      ticks: 2564
+      ticks: 3003
       speed: 0
-      load: -918
+      load: 0
   Gripper:
     min:
-      ticks: 1731
+      ticks: 918
       speed: 0
       load: 0
     center:
-      ticks: 2090
-      speed: -1
+      ticks: 1405
+      speed: 2364
       load: 0
     max:
-      ticks: 3248
+      ticks: 2118
       speed: 0
       load: 0
