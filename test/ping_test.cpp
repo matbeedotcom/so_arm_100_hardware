@@ -7,7 +7,7 @@ SMS_STS sm_st;
 
 int main(int argc, char **argv)
 {
-    const char* port = "/dev/ttyUSB0";  // Use absolute path
+    const char* port = "/dev/ttyACM0";  // Use absolute path
     std::cout<<"serial:"<<port<<std::endl;
     
     if(!sm_st.begin(1000000, port)){

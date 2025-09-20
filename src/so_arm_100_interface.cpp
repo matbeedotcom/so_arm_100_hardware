@@ -41,7 +41,7 @@ CallbackReturn SOARM100Interface::on_init(const hardware_interface::HardwareInfo
         (hardware_info.hardware_parameters.at("use_serial") == "true") : false;
     
     serial_port_ = hardware_info.hardware_parameters.count("serial_port") ?
-        hardware_info.hardware_parameters.at("serial_port") : "/dev/ttyUSB0";
+        hardware_info.hardware_parameters.at("serial_port") : "/dev/ttyACM0";
     
     serial_baudrate_ = hardware_info.hardware_parameters.count("serial_baudrate") ?
         std::stoi(hardware_info.hardware_parameters.at("serial_baudrate")) : 1000000;

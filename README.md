@@ -81,7 +81,7 @@ Create a ROS 2 Control configuration file (YAML) that includes the hardware inte
 so_arm_100:
   hardware_interface:
     use_serial: true  # Set to true for real robot, false for simulation
-    serial_port: "/dev/ttyUSB0"  # Serial port for real robot
+    serial_port: "/dev/ttyACM0"  # Serial port for real robot
     serial_baudrate: 1000000  # Serial baudrate
 ```
 
