@@ -5,6 +5,9 @@ from rclpy.node import Node
 from std_srvs.srv import Trigger
 from sensor_msgs.msg import JointState
 import sys
+import yaml
+import os
+from datetime import datetime
 
 class SingleJointCalibrator(Node):
     def __init__(self):
@@ -137,6 +140,69 @@ class SingleJointCalibrator(Node):
 
         return limits
 
+    def save_calibration(self, joint_idx, limits):
+        """Save calibration data to files"""
+        joint_name = self.joint_names[joint_idx]
+
+        # Create calibration data structure
+        calibration_data = {
+            'timestamp': datetime.now().isoformat(),
+            'joint': joint_name,
+            'limits': {
+                'min_position': limits['min'],
+                'center_position': limits['center'],
+                'max_position': limits['max'],
+                'range_rad': limits['max'] - limits['min'],
+                'range_deg': (limits['max'] - limits['min']) * 57.2958
+            }
+        }
+
+        # Save to calibration file
+        config_dir = '/ros2_ws/src/so_arm_100_hardware/config'
+        os.makedirs(config_dir, exist_ok=True)
+
+        calib_file = os.path.join(config_dir, f'{joint_name.lower()}_calibration.yaml')
+        with open(calib_file, 'w') as f:
+            yaml.dump(calibration_data, f, default_flow_style=False)
+
+        print(f"\n✓ Calibration data saved to: {calib_file}")
+
+        # Update or create joint_limits.yaml entry
+        joint_limits_file = '/ros2_ws/src/so_100_arm/config/joint_limits.yaml'
+
+        try:
+            # Load existing joint_limits.yaml
+            if os.path.exists(joint_limits_file):
+                with open(joint_limits_file, 'r') as f:
+                    joint_limits = yaml.safe_load(f) or {}
+            else:
+                joint_limits = {'joint_limits': {}}
+
+            # Ensure joint_limits structure exists
+            if 'joint_limits' not in joint_limits:
+                joint_limits['joint_limits'] = {}
+
+            # Update this joint's limits
+            joint_limits['joint_limits'][joint_name] = {
+                'max_position': limits['max'],
+                'min_position': limits['min'],
+                'max_velocity': 1.0,  # Default velocity limit
+                'max_effort': 10.0    # Default effort limit
+            }
+
+            # Save updated joint_limits.yaml
+            with open(joint_limits_file, 'w') as f:
+                yaml.dump(joint_limits, f, default_flow_style=False)
+
+            print(f"✓ Updated joint_limits.yaml with {joint_name} limits")
+
+        except Exception as e:
+            print(f"Warning: Could not update joint_limits.yaml: {e}")
+            print("Manual update required:")
+            print(f"  {joint_name}:")
+            print(f"    max_position: {limits['max']:.6f}")
+            print(f"    min_position: {limits['min']:.6f}")
+
 def main():
     rclpy.init()
 
@@ -154,10 +220,14 @@ def main():
             limits = calibrator.calibrate_joint(joint_idx)
 
             if limits:
+                # Save calibration data
+                calibrator.save_calibration(joint_idx, limits)
+
                 print("\n" + "="*50)
                 print("CALIBRATION COMPLETE")
                 print("="*50)
-                print(f"Add these values to joint_limits.yaml for {calibrator.joint_names[joint_idx]}:")
+                print(f"Calibration data automatically saved for {calibrator.joint_names[joint_idx]}")
+                print(f"Values written to joint_limits.yaml:")
                 print(f"  max_position: {limits['max']:.6f}")
                 print(f"  min_position: {limits['min']:.6f}")
 
